@@ -101,7 +101,7 @@ async function resetTheme(silent = false) {
 		);
 	}
 	loadedThemeElements.js = null;
-	extension_settings[extensionName].lastSuccessfulTheme = null;
+	extension_settings[extensionName].lastSuccessfulTheme = ""; 
 	saveSettingsDebounced();
 	if (!silent) {
 		toastr.success("Reset back to default SillyTavern theme.");

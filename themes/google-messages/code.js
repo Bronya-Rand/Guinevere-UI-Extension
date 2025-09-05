@@ -1,4 +1,3 @@
-import { extensionFolderPath } from "../../constants.js";
 import { select2ChoiceClickSubscribe } from "../../../../../utils.js";
 import { world_names } from "../../../../../world-info.js";
 import { eventSource, event_types, name1 } from "../../../../../../script.js";
@@ -43,13 +42,7 @@ export async function execute() {
 	}
 	const themeDiv = HTML_CONTAINER;
 
-	// Apply theme via new div
-	const themeHTMLPath = `${extensionFolderPath}/themes/google-messages/index.html`;
-
 	try {
-		const data = await $.get(themeHTMLPath);
-		themeDiv.html(data);
-
 		// Add logic to google-message-settings-icon (Profile icon)
 		themeDiv.find("#google-message-settings-icon").on("click", () => {
 			$("#google-message-settings-modal").toggle();
