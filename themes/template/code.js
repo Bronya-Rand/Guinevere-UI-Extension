@@ -12,52 +12,21 @@
  * example to get you started.
  */
 
-import { extensionFolderPath } from "../../constants.js";
+const HTML_CONTAINER = $("#template-container");
 
 /**
  * Executes the Template theme code.
- * @param {any} themeDiv - The div to apply the theme to
- * @param {*} auto - Whether the theme is being applied automatically (on toggle/startup)
+ * @note Breaking Change as of Guinevere 2.0: `auto` and `themeDiv` parameters are now removed.
+ * It is now recommended to make a container of your HTML contents in your theme's HTML file.
  */
-export async function execute(themeDiv, auto) {
-	// Don't touch this.
-	const topSettingsHolder = $("#top-settings-holder");
-	if (!topSettingsHolder.length) {
-		throw Error("Failed to find top-settings-holder.");
-	}
-
-	// Path to the theme's index.html file
-	const themeHTMLPath = `${extensionFolderPath}/themes/template/index.html`;
-
+export async function execute() {
 	try {
-		const data = await $.get(themeHTMLPath);
-		themeDiv.html(data);
-
 		// Your code here (e.g. event listeners, logic, etc.)
-		// Preferralby assign jQuery logic to the new stuff you added to your theme.
-
-		// Appends your theme above the top bar
-		// If you want this after, use `after` instead of `before`.
-		topSettingsHolder.before(themeDiv);
-
-		// Additional code here (e.g. event listeners, logic, etc.)
-		// This is for if you want to add more logic to your theme that only works
-		// after the theme has been appended to the page.
+		// Preferably assign jQuery logic to the new stuff you added to your theme.
+		console.log("Template theme code executed.");
 	} catch (error) {
 		throw Error(error);
 	}
-
-	// Uncomment these lines if you want to use your own CSS file
-	// for the theme.
-	// Path to the theme's CSS file
-	// const cssPath = `${extensionFolderPath}/themes/template/style.css`;
-	// try {
-	// 	const cssData = await $.get(cssPath);
-	// 	$("#guinevere-theme-css").remove();
-	// 	$("<style id='guinevere-theme-css'></style>").html(cssData).appendTo("head");
-	// } catch (error) {
-	// 	throw Error(error);
-	// };
 }
 
 /**
@@ -65,7 +34,4 @@ export async function execute(themeDiv, auto) {
  */
 export function disable() {
 	// Your removal code here (if applicable)
-	// Removes the theme's CSS. If you used your own CSS file, uncomment this.
-	// $("#guinevere-theme-css").remove();
-	$("#guinevere-theme").empty();
 }
