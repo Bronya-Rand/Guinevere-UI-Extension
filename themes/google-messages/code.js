@@ -12,6 +12,7 @@ import { debounce_timeout } from "../../../../../constants.js";
  * @property {string} key - The id of the old div (top-settings-holder).
  * @property {string} value - The id of the new div (google-st-preview).
  */
+const HTML_CONTAINER = $("#google-messages-container");
 const ATTACH_TO_FROM = {};
 const profileDataDebounce = debounce(setProfile, debounce_timeout.quick);
 
@@ -34,14 +35,13 @@ function setProfile() {
 
 /**
  * Executes the Google Messages theme code.
- * @param {any} themeDiv - The div to apply the theme to
- * @param {boolean} auto - Whether the theme is being applied automatically (on toggle/startup)
  */
-export async function execute(themeDiv, auto) {
+export async function execute() {
 	const topSettingsHolder = $("#top-settings-holder");
 	if (!topSettingsHolder.length) {
 		throw Error("Failed to find top-settings-holder.");
 	}
+	const themeDiv = HTML_CONTAINER;
 
 	// Apply theme via new div
 	const themeHTMLPath = `${extensionFolderPath}/themes/google-messages/index.html`;
@@ -144,17 +144,6 @@ export async function execute(themeDiv, auto) {
 		throw Error(error);
 	}
 
-	const cssPath = `${extensionFolderPath}/themes/google-messages/style.css`;
-	try {
-		const cssData = await $.get(cssPath);
-		$("#guinevere-theme-css").remove();
-		$("<style id='guinevere-theme-css'></style>")
-			.html(cssData)
-			.appendTo("head");
-	} catch (error) {
-		throw Error(error);
-	}
-
 	eventSource.on(event_types.SETTINGS_UPDATED, profileDataDebounce);
 
 	topSettingsHolder.css("display", "none");
@@ -165,14 +154,17 @@ export function disable() {
 	const topSettingsHolder = $("#top-settings-holder");
 
 	// Detach all elements from the new div to the old div
-	const stPreviewer = $("#guinevere-theme").find("#google-st-preview");
+	const stPreviewer = HTML_CONTAINER.find("#google-st-preview");
 
 	for (const [key, value] of Object.entries(ATTACH_TO_FROM)) {
 		const oldDrawerContent = topSettingsHolder.find(`#${key}`);
 		const newDrawerContent = stPreviewer.find(`#${value}`);
 
 		newDrawerContent.removeClass("google-message-st-option-preview");
-		newDrawerContent.css("display", "none");
+
+		// Clear all styles
+		newDrawerContent.attr("style", "");
+
 		newDrawerContent.detach();
 		oldDrawerContent.append(newDrawerContent);
 	}
@@ -207,8 +199,4 @@ export function disable() {
 	// remove display element from top-settings-holder
 	topSettingsHolder.css("display", "flex");
 	$("#top-bar").css("display", "flex");
-
-	// remove css
-	$("#guinevere-theme-css").remove();
-	$("#guinevere-theme").empty();
 }

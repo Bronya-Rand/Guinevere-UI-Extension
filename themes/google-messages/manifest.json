@@ -1,0 +1,15 @@
+{
+    "name": "Google Messages",
+    "version": "1.0.0",
+    "author": "Bronya-Rand",
+    "type": "full",
+    "files": {
+        "css": [
+            "style.css"
+        ],
+        "html": [
+            "index.html"
+        ],
+        "js": "code.js"
+    }
+}
