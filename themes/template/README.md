@@ -3,6 +3,7 @@ Starting from Guinevere 2.0, all themes will be required to record all their fil
 
 Important fields to keep in mind are:
 - Name: Basically the human friendly name of your theme.
+- Version: Version of your theme.
 - Type: This specifies the type of theme you are using. This can be either:
 
     1. "css" - A pure CSS theme.

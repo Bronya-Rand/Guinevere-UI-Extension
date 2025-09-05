@@ -233,7 +233,8 @@ async function applyHtmlTheme(themePath, manifest, themeName) {
 	if (manifest.files?.js) {
 		const jsFile = `./themes/${themeName}/${manifest.files.js}`;
 		try {
-			const module = await import(`${jsFile}?t=${Date.now()}`); // Cache-busting
+			const manifest = await fetch(`${themePath}/manifest.json`).then(res => res.json());
+			const module = await import(`${jsFile}?t=${manifest.version || "1"}`); // Cache-busting
 			loadedThemeElements.js = module;
 			if (typeof module.execute === "function") {
 				await module.execute();
