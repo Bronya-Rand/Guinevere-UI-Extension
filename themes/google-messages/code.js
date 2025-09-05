@@ -40,32 +40,31 @@ export async function execute() {
 	if (!topSettingsHolder.length) {
 		throw Error("Failed to find top-settings-holder.");
 	}
-	const themeDiv = HTML_CONTAINER;
 
 	try {
 		// Add logic to google-message-settings-icon (Profile icon)
-		themeDiv.find("#google-message-settings-icon").on("click", () => {
+		HTML_CONTAINER.find("#google-message-settings-icon").on("click", () => {
 			$("#google-message-settings-modal").toggle();
 		});
 
 		// Add logic to google-message-modal-settings-button (ST Settings button)
-		themeDiv.find("#google-message-modal-settings-button").on("click", () => {
+		HTML_CONTAINER.find("#google-message-modal-settings-button").on("click", () => {
 			$("#google-message-settings-modal").hide();
 			$("#google-message-st-settings-modal").toggle();
 		});
 
 		// Add logic to google-message-st-modal-close (close button)
-		themeDiv.find("#google-message-st-modal-close").on("click", () => {
+		HTML_CONTAINER.find("#google-message-st-modal-close").on("click", () => {
 			$("#google-message-st-settings-modal").hide();
 		});
 
 		setProfile();
 
-		// Append themeDiv above top-bar
-		topSettingsHolder.before(themeDiv);
+		// Append HTML_CONTAINER above top-bar
+		topSettingsHolder.before(HTML_CONTAINER);
 
-		const stOptions = themeDiv.find("#google-st-options");
-		const stPreviewer = themeDiv.find("#google-st-preview");
+		const stOptions = HTML_CONTAINER.find("#google-st-options");
+		const stPreviewer = HTML_CONTAINER.find("#google-st-preview");
 
 		// Grab data from top-settings-holder
 		const drawerButtons = topSettingsHolder.find(".drawer");
