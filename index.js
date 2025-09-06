@@ -134,10 +134,8 @@ async function applyTheme(silent) {
 				await applyCssTheme(themePath, manifest);
 				break;
 			case "html":
-				await applyHtmlTheme(themePath, manifest, themeName);
-				break;
 			case "full":
-				await applyFullTheme(themePath, manifest, themeName);
+				await applyHtmlTheme(themePath, manifest, themeName);
 				break;
 			default:
 				toastr.error(`Unknown theme type "${themeType}" in manifest.`);
@@ -242,24 +240,6 @@ async function applyHtmlTheme(themePath, manifest, themeName) {
 		} catch (error) {
 			console.error(`Failed to load JS file '${jsFile}':`, error);
 		}
-	}
-}
-
-/** Applies a full theme (CSS, HTML, JS) based on the provided manifest.
- * @param {string} themePath - The base path of the theme.
- * @param {Object} manifest - The theme's manifest object.
- * @param {string} themeName - The name of the theme being applied.
- */
-async function applyFullTheme(themePath, manifest, themeName) {
-	try {
-		// Apply CSS
-		await applyCssTheme(themePath, manifest);
-
-		// Apply HTML and JS
-		await applyHtmlTheme(themePath, manifest, themeName);
-	} catch (error) {
-		console.error(`Error applying full theme "${themeName}":`, error);
-		throw error; // Re-throw to be caught in applyTheme
 	}
 }
 
