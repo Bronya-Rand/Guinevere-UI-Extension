@@ -8,7 +8,7 @@ The Guinevere UI Extension is a massive extension for SillyTavern that basically
 
 ## Features
 
-1. A complete overhaul of SillyTavern's original UI in one added line of code.
+1. A complete overhaul of SillyTavern's original UI with one click of a button.
     > To put it briefly, SillyTavern's UI hasn't really aged well for some folk, especially those who either come from a AI website like C.AI or were using TavernAI, MikuPad, etc. (Trust me. I was on the same boat for a while). Well rest easy now that you have full control of the UI with whatever placement, icons, images you wish to add whether it be mimicking a existing UI or making one from scratch!
 
     <p align="center">
@@ -76,7 +76,7 @@ See the `template` folder in your Guinevere's theme folder as a starter to make 
 
 1. If you plan to share your theme, make sure your theme works for mobile users! Or at least state this is mostly a Desktop designed theme. People may install your theme and wonder why it looks jank on their end. Use different monitors, devices, etc.
 2. Preferably use CSS that exists in ST already! People may want to apply a UI theme over yours! Be grateful people will use your theme and allow others to style it more their way too!
-3. Do not change any of Guinevere's code lines unless you *know* what you are doing. To put it frank, the internals are only needed to work the execution of stuff on the frontend side. All your code should go into your themes folder. JS code should be executed using a `code.js` file.
+3. Do not change any of Guinevere's code lines unless you *know* what you're doing. To put it frank, the internals are only needed to work the execution of stuff on the frontend side. All your code should go into your themes folder. JS code should be executed using a `code.js` file.
 4. Make sure you test your theme rigurously. Especially when it comes to resetting. People are gonna wonder why your theme breaks other themes if you don't reset it properly and not recommend it.
 5. Don't be a dolt. Just do this for fun and not of malice.
 
