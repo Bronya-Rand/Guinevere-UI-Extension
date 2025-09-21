@@ -6,6 +6,12 @@ import {
 } from "./constants.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
+const loadedThemeElements = {
+	css: [],
+	htmlElements: [],
+	js: null,
+};
+
 async function loadSettings() {
 	extension_settings[extensionName] = extension_settings[extensionName] || {};
 	if (Object.keys(extension_settings[extensionName]).length === 0) {
@@ -18,8 +24,10 @@ async function loadSettings() {
 	);
 	$("#guinevere-theme-input").val(extension_settings[extensionName].theme);
 
-	extension_settings[extensionName].lastSuccessfulTheme = "";
-	saveSettingsDebounced();
+	// If enabled on startup, apply the theme
+	if (extension_settings[extensionName].enabled) {
+		applyTheme(true);
+	}
 }
 
 // Handles the enabling/disabling of Guinevere.
@@ -34,7 +42,6 @@ function onThemeBoxClick(event) {
 
 // Handles the input box for theme selection.
 function onThemeTextChange() {
-	// Get the value of the input box
 	const value = $("#guinevere-theme-input").val();
 	extension_settings[extensionName].theme = value;
 	saveSettingsDebounced();
@@ -42,143 +49,209 @@ function onThemeTextChange() {
 }
 
 // Handles the application of Guinevere themes.
-function onThemeApplyClick() {
+async function onThemeApplyClick() {
 	if (!extension_settings[extensionName].enabled) {
 		toastr.error("Guinevere is not enabled.");
 		return;
 	}
-	applyTheme();
+	await applyTheme();
 }
 
 // Handles the removal of Guinevere themes.
 function onThemeRemoveClick() {
 	resetTheme();
 	extension_settings[extensionName].enabled = false;
-	extension_settings[extensionName].theme = "";
-	saveSettingsDebounced();
 	$("#guinevere-enable").prop("checked", false);
-	$("#guinevere-theme-input").val("");
+	saveSettingsDebounced();
 }
 
 /**
- * Executes the theme's code.js file.
- * @param {any} themeDiv - The div to apply the theme to.
- * @param {boolean} auto - Whether the theme is being applied automatically (on toggle/startup).
+ * Removes all active theme elements from the DOM.
  * @param {boolean} silent - Whether to suppress the success message.
  */
-function executeCode(themeDiv, auto, silent) {
-	if (extension_settings[extensionName].theme === "") {
-		toastr.error("No theme selected.");
-		return;
+async function resetTheme(silent = false) {
+	// Unload CSS
+	for (const linkElement of loadedThemeElements.css) {
+		linkElement.remove();
 	}
+	loadedThemeElements.css = [];
 
-	const themeCode = `./themes/${extension_settings[extensionName].theme}/code.js`;
-	try {
-		import(themeCode)
-			.then((module) => {
-				module.execute(themeDiv, auto);
-				extension_settings[extensionName].lastSuccessfulTheme =
-					extension_settings[extensionName].theme;
-				saveSettingsDebounced();
+	// Unload HTML
+	for (const htmlElement of loadedThemeElements.htmlElements) {
+		htmlElement.remove();
+	}
+	loadedThemeElements.htmlElements = [];
 
-				if (!silent)
-					toastr.success(
-						`Applied '${extension_settings[extensionName].theme}' theme successfully.`,
-					);
-			})
-			.catch((error) => {
-				toastr.error(
-					`Failed to apply '${extension_settings[extensionName].theme}' theme${auto ? " automatically." : "."} Check console for more info.`,
-				);
-				console.error(error);
-			});
-	} catch (error) {
-		toastr.error(
-			`Failed to execute '${extension_settings[extensionName].theme}' code file${auto ? " automatically." : "."} Check console for more info.`,
+	// Unload JS
+	if (
+		loadedThemeElements.js &&
+		typeof loadedThemeElements.js.disable === "function"
+	) {
+		try {
+			await loadedThemeElements.js.disable();
+		} catch (error) {
+			console.error("Error while disabling theme JS:", error);
+			toastr.error(
+				"There was an error while disabling the theme's JavaScript code. Refresh SillyTavern to ensure all theme code is removed and contact the theme developer to fix this error.",
+			);
+		}
+	} else {
+		console.log(
+			`[${extensionName}] No JS to unload for theme "${extension_settings[extensionName].lastSuccessfulTheme}".`,
 		);
-		console.error(error);
 	}
-}
-
-/**
- * Executes the theme's disable code.
- */
-function executeDisableCode() {
-	if (!extension_settings[extensionName].theme === "") {
-		toastr.error("No theme selected.");
-		return;
-	}
-	if (extension_settings[extensionName].lastSuccessfulTheme === "") {
-		toastr.error("No theme has been successfully applied to revert from.");
-		return;
-	}
-
-	// import "disable" from theme's code.js file
-	const themeCode = `./themes/${extension_settings[extensionName].lastSuccessfulTheme}/code.js`;
-	try {
-		import(themeCode)
-			.then((module) => {
-				module.disable();
-			})
-			.catch((error) => {
-				toastr.error(
-					"Failed to revert to default theme. Check console for more info.",
-				);
-				console.error(error);
-			});
-	} catch (error) {
-		toastr.error(
-			"Failed to execute last successful theme's disable code. Check console for more info.",
-		);
-		console.error(error);
+	loadedThemeElements.js = null;
+	extension_settings[extensionName].lastSuccessfulTheme = ""; 
+	saveSettingsDebounced();
+	if (!silent) {
+		toastr.success("Reset back to default SillyTavern theme.");
 	}
 }
 
 /**
  * Applies a Guinevere theme to the page.
- * @param {boolean} auto - Whether the theme is being applied automatically (on toggle/startup).
  * @param {boolean} silent - Whether to suppress the success message.
  */
-async function applyTheme(auto, silent) {
+async function applyTheme(silent) {
 	// Ensure the last theme is cleaned up before applying a new one
-	resetTheme(true);
+	await resetTheme(true);
 
-	const themeDiv = $("<div id='guinevere-theme'></div>");
-	if (extension_settings[extensionName].enabled) {
-		executeCode(themeDiv, auto, silent);
+	const themeName = extension_settings[extensionName].theme;
+	if (!themeName) {
+		toastr.error("No theme specified.");
+		return;
+	}
+
+	const themePath = `${extensionFolderPath}/themes/${themeName}`;
+	const manifestPath = `${themePath}/manifest.json`;
+
+	try {
+		const manifest = await $.getJSON(manifestPath);
+		const themeType = manifest.type || "full";
+
+		switch (themeType) {
+			case "css":
+				await applyCssTheme(themePath, manifest);
+				break;
+			case "html":
+			case "full":
+				await applyHtmlTheme(themePath, manifest, themeName);
+				break;
+			default:
+				toastr.error(`Unknown theme type "${themeType}" in manifest.`);
+				return;
+		}
+
+		extension_settings[extensionName].lastSuccessfulTheme = themeName;
+		if (!silent) {
+			toastr.success(
+				`Applied '${manifest.name || themeName}' theme successfully.`,
+			);
+		}
+	} catch (error) {
+		console.error(`Failed to load/apply theme '${themeName}':`, error);
+		toastr.error(
+			`Failed to load/apply theme "${themeName}". Check the console for details.`,
+		);
 	}
 }
 
 /**
- * Resets the theme back to the default theme.
- * @param {boolean} silent - Whether to suppress the success message.
- * @returns {void}
+ * Applies a CSS file to the document.
+ * @param {string} cssPath - The path to the CSS file.
  */
-function resetTheme(silent) {
-	const themeDiv = $("#guinevere-theme");
-	if (themeDiv.length === 0) {
-		return;
+function applyCssFile(cssPath) {
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.type = "text/css";
+	link.href = cssPath;
+	document.head.appendChild(link);
+	loadedThemeElements.css.push($(link));
+}
+
+/**
+ * Applies a CSS theme based on the provided manifest.
+ * @param {string} themePath - The base path of the theme.
+ * @param {Object} manifest - The theme's manifest object.
+ */
+async function applyCssTheme(themePath, manifest) {
+	if (manifest.files?.css) {
+		for (const cssFile of manifest.files.css) {
+			applyCssFile(`${themePath}/${cssFile}`);
+		}
 	}
-	executeDisableCode(themeDiv);
-	$("#guinevere-theme-input").val(extension_settings[extensionName].theme);
-	$("#guinevere-enable").prop(
-		"checked",
-		extension_settings[extensionName].enabled,
-	);
-	if (!silent) toastr.success("Reverted to default theme.");
+}
+
+/**
+ * Applies an HTML theme based on the provided manifest.
+ * @param {string} themePath - The base path of the theme.
+ * @param {Object} manifest - The theme's manifest object.
+ * @param {string} themeName - The name of the theme being applied.
+ */
+async function applyHtmlTheme(themePath, manifest, themeName) {
+	// Apply CSS first (if any)
+	await applyCssTheme(themePath, manifest);
+
+	// Apply HTML
+	if (manifest.files?.html) {
+		for (const htmlFile of manifest.files.html) {
+			const htmlContent = await $.get(`${themePath}/${htmlFile}`);
+
+			// Parse the HTML contents
+			const elements = $($.parseHTML(htmlContent.trim()));
+
+			// Inject element before the main ST UI (#top-bar), unless specified otherwise
+			const injectPoint = manifest.injectPoint || "#top-bar";
+			const injectMethod = manifest.injectMethod || "before";
+
+			for (const element of elements) {
+				const el = $(element);
+
+				switch (injectMethod) {
+					case "after":
+						$(injectPoint).after(el);
+						break;
+					case "prepend":
+						$(injectPoint).prepend(el);
+						break;
+					case "append":
+						$(injectPoint).append(el);
+						break;
+					default:
+						$(injectPoint).before(el);
+						break;
+				}
+				// Store reference for later removal
+				loadedThemeElements.htmlElements.push(el);
+			}
+		}
+	}
+
+	// Apply JS (if any)
+	if (manifest.files?.js) {
+		const jsFile = `./themes/${themeName}/${manifest.files.js}`;
+		try {
+			const manifest = await fetch(`${themePath}/manifest.json`).then(res => res.json());
+			const module = await import(`${jsFile}?t=${manifest.version || "1"}`); // Cache-busting
+			loadedThemeElements.js = module;
+			if (typeof module.execute === "function") {
+				await module.execute();
+			}
+		} catch (error) {
+			console.error(`Failed to load JS file '${jsFile}':`, error);
+		}
+	}
 }
 
 // This function is called when the extension is loaded
-jQuery(async () => {
+$(document).ready(async () => {
 	const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
 	$("#extensions_settings").append(settingsHtml);
 
-	loadSettings();
+	await loadSettings();
 
 	$("#guinevere-enable").on("click", onThemeBoxClick);
 	$("#guinevere-apply").on("click", onThemeApplyClick);
 	$("#guinevere-reset").on("click", onThemeRemoveClick);
 	$("#guinevere-theme-text-button").on("click", onThemeTextChange);
-
-	await applyTheme(true, true);
 });
