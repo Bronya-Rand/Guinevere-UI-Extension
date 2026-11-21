@@ -1,336 +1,97 @@
-/* Google Messages UI */
-body {
-	display: flex;
+body[data-guinevere-theme="google-messages"] {
+    --gm-sidebar: 296px;
+    --gm-header: 64px;
+    --gm-chat-top: 120px;
+    --gm-canvas: var(--guinevere-chat-surface);
 }
-
-/* Google Messages PFP Settings Button */
-#google-message-settings-icon {
-	position: fixed;
-	top: 15px;
-	right: 19px;
-	background: none;
-	border: none;
-	cursor: pointer;
-	padding: 0;
-	z-index: 1001;
-	width: 42px; /* Set width to match the profile image */
-	height: 42px; /* Set height to match the profile image */
+body[data-guinevere-theme="google-messages"][data-gm-navigation="closed"] { --gm-sidebar: 0px; }
+/* Native controls use the selected palette locally; ST's saved colors stay intact. */
+body[data-guinevere-theme="google-messages"] #gm-shell,
+body[data-guinevere-theme="google-messages"] #sheld {
+    --SmartThemeBodyColor: var(--guinevere-text);
+    --SmartThemeBlurTintColor: var(--guinevere-surface);
+    --SmartThemeBorderColor: var(--guinevere-border);
+    color: var(--guinevere-text);
 }
-
-.google-message-settings-profile-image {
-	width: 42px;
-	height: 42px;
-	border-radius: 50%;
-	object-fit: cover;
-}
-
-/* Google Messages Profile Modal */
-.google-message-modal {
-	display: none;
-	z-index: 1000;
-	top: 0;
-	overflow: auto;
-	width: 100%;
-	height: 100vh; /* Full height */
-	position: absolute;
-}
-
-.google-message-modal-content {
-	background-color: #131313;
-	position: absolute;
-	padding: 20px;
-	border-radius: 25px;
-	top: 78px;
-	right: 29px;
-	/* min-height: 535px; */
-	min-height: 300px;
-	overflow-y: auto;
-	box-shadow: 0 0 10px var(--border_color);
-}
-
-.google-message-modal-google-text {
-	color: var(--main_text_color);
-	font-size: 14px;
-	font-weight: 500;
-	text-align: center;
-}
-
-.google-message-modal-profile-image {
-	width: 90px;
-	align-self: center;
-	aspect-ratio: 1 / 1;
-	border-radius: 50%;
-	object-fit: cover;
-}
-
-.google-message-modal-profile-name {
-	color: var(--main_text_color);
-	font-size: 22px;
-	font-weight: 300;
-	text-align: center;
-	min-height: 23px;
-	margin: 0.85vh;
-}
-
-.google-message-modal-settings {
-	display: flex;
-	justify-content: center;
-	flex-direction: column;
-}
-
-.google-message-modal-settings-button {
-	background: none;
-	border: 1px solid white;
-	border-radius: 31px;
-	width: 57%;
-	height: 40px;
-	align-self: center;
-	font-size: 14px;
-	color: var(--main_text_color);
-}
-
-.google-message-modal-terms-div {
-	display: flex;
-	justify-content: center;
-	margin-top: 20px;
-}
-
-.google-message-modal-terms {
-	color: var(--quote_text_color);
-	font-size: 12px;
-	font-weight: 300;
-	text-align: center;
-}
-
-.google-message-general-modal {
-	display: none; /* Hidden by default */
-	position: fixed; /* Stay in place */
-	z-index: 1002; /* Sit on top */
-	left: 0;
-	top: 0;
-	width: 100%; /* Full width */
-	height: 100vh; /* Full height */
-	overflow: auto; /* Enable scroll if needed */
-	background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity - background overlay */
-}
-
-/* Google Messages General Modal */
-.google-message-general-modal-content {
-	background-color: #131313;
-	margin: 5% auto;
-	width: 95%; /* Adjust modal width as needed */
-	max-height: 90%;
-	border-radius: 10px; /* Rounded corners */
-	box-shadow: 0 4px 8px 0 var(--border_color);
-	color: var(--main_text_color);
-	position: relative; /* To position close button */
-	padding: 10px;
-}
-
-.google-message-st-modal-title-div {
-	display: flex;
-	justify-content: space-between;
-	flex-direction: row;
-}
-
-.google-message-st-modal-title {
-	color: var(--main_text_color);
-	font-weight: 500;
-	padding: 0px 0px 0px 10px;
-}
-
-.google-message-st-modal-close {
-	color: #aaa;
-	font-weight: bold;
-	background: none;
-	border: none;
-	position: relative;
-	bottom: 1vh;
-}
-
-.google-message-st-modal-close:hover,
-.google-message-st-modal-close:focus {
-	color: white;
-	text-decoration: none;
-	cursor: pointer;
-}
-
-.google-message-st-modal-settings {
-	display: flex;
-	justify-content: start;
-	flex-direction: column;
-}
-
-.google-message-st-modal-settings2 {
-	display: flex;
-	justify-content: center;
-	height: 100%;
-}
-
-.google-message-st-options {
-	display: flex;
-}
-
-.google-message-st-options::selection {
-	background-color: transparent;
-}
-
-.google-message-st-options-preview {
-	display: initial;
-	justify-content: center;
-	flex-direction: column;
-	overflow-y: auto;
-	width: 100%;
-	max-height: 70vh;
-}
-
-.google-message-st-option-preview {
-	display: none;
-}
-
-/* Modify the modal content for mobile */
-@media screen and (min-width: 360px) {
-	.google-message-modal {
-		left: 15px;
-	}
-	.google-message-modal-content {
-		width: 330px;
-	}
-	.google-message-st-modal-close {
-		font-size: 32px;
-	}
-	.google-message-st-modal-title {
-		font-size: 18px;
-	}
-	.google-message-st-modal-settings2 {
-		flex-direction: column;
-	}
-	.google-message-st-options {
-		flex-direction: row;
-		width: unset;
-		padding: 0px 0px 5px 0px;
-		overflow-x: scroll;
-	}
-	.google-message-general-modal-content {
-		min-width: 43vh;
-		max-height: unset;
-	}
-	.google-message-st-options-preview {
-		max-height: 71vh;
-		height: unset;
-	}
-	.google-message-st-modal-title-div {
-		flex-direction: row;
-	}
-}
-
-@media screen and (min-width: 375px) {
-	.google-message-modal-content {
-		width: 340px;
-	}
-}
-
-@media screen and (min-width: 400px) {
-	.google-message-modal-content {
-		width: 385px;
-	}
-	.google-message-st-options {
-		flex-direction: row;
-		padding: 0px 0px 0px 8px;
-		width: unset;
-	}
-	.google-message-st-options-preview {
-		max-height: 72vh;
-		height: unset;
-	}
-	.google-message-st-modal-close {
-		font-size: 36px;
-	}
-	.google-message-st-modal-title {
-		font-size: 20px;
-	}
-}
-
-@media screen and (min-width: 500px) {
-	.google-message-st-options {
-		flex-direction: column;
-		width: 60px;
-	}
-	.google-message-st-modal-settings2 {
-		flex-direction: row;
-	}
-	.google-message-modal {
-		left: 0;
-	}
-	.google-message-modal-content {
-		width: 410px;
-	}
-}
-
-@media screen and (min-width: 1000px) {
-	.google-message-modal-content {
-		width: 385px;
-	}
-	.google-message-general-modal-content {
-		min-width: 43vh;
-		max-height: unset;
-	}
-}
-
-/* ST Fields */
-/* Hide all those that are applicable */
-.drawer {
-	padding: 10px;
-	justify-content: start;
-}
-
-.drawer-content {
-	background-color: transparent;
-	border: none;
-	position: unset;
-	width: auto;
-}
-
-.drawer-toggle {
-	padding: 0px 4px 10px 0px;
-}
-
-.editable-slider-notification {
-	position: inherit;
-}
-
-.topRightInset {
-	top: 90px;
-}
-
-.bg_list {
-	width: auto;
-}
-
-.flexFlowColumn {
-	max-width: 99.5%;
-}
-
-#sheld {
-	border-radius: 15px;
-	height: 100%;
-	top: unset;
-	max-height: unset;
-}
-
-#chat {
-	max-height: unset;
-}
-
-#completion_prompt_manager_popup {
-	max-width: 50%;
-}
-
-@media screen and (max-width: 1000px) {
-	.mes {
-		top: 60px;
-	}
-	.topRightInset {
-		top: 15vh;
-	}
+#gm-shell { position: fixed; inset: 0; z-index: 31; pointer-events: none; color: var(--guinevere-text); font-family: inherit; }
+#gm-shell * { box-sizing: border-box; }
+#gm-shell button, #gm-shell a, #gm-shell select, #gm-shell input { font: inherit; }
+#gm-shell button { cursor: pointer; color: inherit; border: 0; background: transparent; text-align: left; }
+#gm-shell button:disabled { opacity: .5; cursor: default; }
+#gm-shell button:focus-visible, #gm-shell a:focus-visible, #gm-shell select:focus-visible { outline: 2px solid var(--guinevere-accent); outline-offset: -3px; }
+#gm-shell button:hover:not(:disabled) { background-color: color-mix(in srgb, var(--guinevere-text) 9%, transparent); }
+#gm-shell [hidden] { display: none !important; }
+#gm-shell .gm-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; text-align: center; font-size: 25px; }
+#gm-shell .gm-app-header { position: absolute; inset: 0 0 auto; height: var(--gm-header); display: flex; align-items: center; gap: 12px; padding: 8px 20px; background: var(--guinevere-surface); border-bottom: 1px solid var(--guinevere-border); pointer-events: auto; }
+#gm-shell .gm-brand { font-size: 23px; letter-spacing: -.7px; flex: 1; white-space: nowrap; }
+#gm-shell .gm-brand span { color: var(--guinevere-accent); }
+#gm-shell .gm-status { border-radius: 20px; padding: 9px 14px; font-size: 12px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#gm-shell .gm-profile-button { position: relative; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 2px solid var(--guinevere-accent); border-radius: 50%; overflow: hidden; }
+#gm-shell .gm-profile-button img { position: absolute; inset: 3px; display: block; width: 34px; height: 34px; min-width: 0; min-height: 0; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 50%; object-fit: cover; object-position: center; }
+#gm-sidebar { position: absolute; top: var(--gm-header); bottom: 0; left: 0; width: 296px; padding: 20px 12px; display: flex; flex-direction: column; gap: 20px; background: color-mix(in srgb, var(--guinevere-surface) 93%, var(--guinevere-text)); border-right: 1px solid var(--guinevere-border); overflow-y: auto; pointer-events: auto; }
+body[data-gm-navigation="closed"] #gm-sidebar { display: none; }
+#gm-shell .gm-start { align-self: flex-start; display: flex; gap: 14px; align-items: center; padding: 20px 26px; border-radius: 24px; background: var(--guinevere-accent); color: #172c49; font-size: 17px; }
+#gm-sidebar nav { display: flex; flex-direction: column; gap: 3px; }
+#gm-sidebar nav button, #gm-shell .gm-sidebar-bottom button { display: flex; gap: 18px; align-items: center; padding: 14px 22px; border-radius: 28px; }
+#gm-shell .gm-nav-label { color: var(--guinevere-muted); font-size: 12px; margin: 24px 22px 7px; text-transform: uppercase; letter-spacing: .1em; }
+#gm-shell .gm-sidebar-bottom { margin-top: auto; display: grid; gap: 10px; }
+#gm-shell .gm-sidebar-bottom a { font-size: 12px; color: var(--guinevere-muted); padding: 10px 22px; }
+#gm-shell .gm-chat-header { position: absolute; top: var(--gm-header); left: var(--gm-sidebar); right: 0; height: 56px; display: flex; align-items: center; padding: 4px 24px; gap: 12px; background: var(--guinevere-surface); pointer-events: auto; }
+#gm-chat-details { flex: 1; border-radius: 10px; padding: 5px 10px; min-width: 0; display: grid; gap: 2px; }
+#gm-chat-name { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#gm-chat-status { color: var(--guinevere-muted); font-size: 11px; }
+#gm-back { display: none !important; }
+#gm-shell .gm-popover { position: absolute; top: 74px; right: 16px; width: min(370px, calc(100vw - 24px)); max-height: calc(100dvh - 90px); overflow: auto; padding: 16px; border-radius: 26px; background: var(--guinevere-surface); box-shadow: 0 8px 32px #0008; pointer-events: auto; z-index: 4; border: 1px solid var(--guinevere-border); }
+#gm-shell .gm-popover > button, #gm-persona-list button { width: 100%; padding: 14px; border-radius: 14px; }
+#gm-shell .gm-popover-heading, #gm-shell .gm-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+#gm-persona-list button { display: flex; align-items: center; gap: 14px; }
+#gm-persona-list img { display: block; flex: 0 0 38px; width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; margin: 0; padding: 0; object-fit: cover; object-position: center; border-radius: 50%; }
+#gm-persona-list button[aria-pressed="true"] { background: color-mix(in srgb, var(--guinevere-accent) 16%, transparent); }
+#gm-profile-error { font-size: 12px; }
+#gm-shell .gm-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #0008; padding: 24px; pointer-events: auto; z-index: 5; }
+#gm-shell .gm-settings-window { width: min(1280px, 100%); height: min(900px, 94dvh); display: flex; flex-direction: column; border-radius: 24px; background: var(--guinevere-surface); border: 1px solid var(--guinevere-border); overflow: hidden; }
+#gm-shell .gm-settings-heading { padding: 12px 20px; border-bottom: 1px solid var(--guinevere-border); flex-shrink: 0; }
+#gm-shell h2 { font-size: 20px; margin: 0; }
+#gm-shell .gm-settings-layout { display: flex; flex: 1; min-height: 0; }
+#gm-settings-tabs { width: 230px; flex-shrink: 0; overflow: auto; padding: 12px; border-right: 1px solid var(--guinevere-border); }
+#gm-settings-tabs button { width: 100%; border-radius: 24px; padding: 13px 16px; margin: 2px 0; }
+#gm-settings-tabs .is-selected { background: color-mix(in srgb, var(--guinevere-accent) 20%, transparent); }
+#gm-settings-panels { flex: 1; min-width: 0; overflow: auto; padding: 20px; }
+#gm-settings-panels > .drawer-content { position: static !important; inset: auto !important; width: 100% !important; max-width: 100% !important; height: auto !important; min-width: 0 !important; max-height: none !important; background: transparent; border: 0; margin: 0; box-shadow: none; backdrop-filter: none; }
+#gm-settings-panels .drag-grabber, #gm-settings-panels .panelControlBar { display: none; }
+#gm-settings-panels .topRightInset { position: static; inset: auto; display: inline-flex; margin: 4px 0 12px; }
+#gm-settings-panels .editable-slider-notification { position: static; inset: auto; width: auto; margin: 0 0 12px; text-align: start; }
+#gm-settings-panels #lm_button_panel_pin_div,
+#gm-settings-panels #rm_button_panel_pin_div,
+#gm-settings-panels #WI_button_panel_pin_div { display: none; }
+#gm-shell .gm-appearance-window { width: min(440px, 100%); max-height: 94dvh; overflow: auto; border-radius: 24px; background: var(--guinevere-surface); padding: 12px 20px 24px; }
+#gm-shell .gm-appearance-window label { display: grid; gap: 12px; margin-top: 24px; }
+#gm-shell .gm-appearance-window select { color: var(--guinevere-text); background: var(--guinevere-surface); border: 1px solid var(--guinevere-border); padding: 12px; border-radius: 12px; }
+#gm-shell .gm-appearance-window .gm-checkbox { display: flex; align-items: center; }
+#gm-shell .gm-appearance-window p { font-size: 12px; color: var(--guinevere-muted); line-height: 1.6; }
+#gm-nav-backdrop { display: none; }
+body[data-guinevere-theme="google-messages"] #sheld { position: fixed; left: var(--gm-sidebar); right: 0; top: var(--gm-chat-top); bottom: 0; width: calc(100% - var(--gm-sidebar)); height: calc(100dvh - var(--gm-chat-top)); max-height: none; margin: 0; border: 0; border-radius: 0; background: var(--gm-canvas); }
+body[data-guinevere-theme="google-messages"][data-gm-background="true"] { --gm-canvas: color-mix(in srgb, var(--guinevere-chat-surface) 72%, transparent); }
+body[data-guinevere-theme="google-messages"] #chat { flex: 1; min-height: 0; max-height: none; padding: 20px clamp(12px, 5vw, 88px); }
+body[data-guinevere-theme="google-messages"] #form_sheld { padding: 12px clamp(12px, 5vw, 88px) max(18px, env(safe-area-inset-bottom)); }
+body[data-guinevere-theme="google-messages"] #send_form { border-radius: 30px; background: color-mix(in srgb, var(--guinevere-surface) 85%, var(--guinevere-text)); border: 0; padding: 8px 14px; }
+body[data-guinevere-theme="google-messages"] #send_textarea { background: transparent; }
+/* Keep ST and Prome in charge of sprites, message visibility, and hide-chat. */
+body[data-guinevere-theme="google-messages"].waifuMode #sheld { top: auto; height: 40dvh; background: color-mix(in srgb, var(--guinevere-chat-surface) 65%, transparent); }
+@media (max-width: 760px) {
+    body[data-guinevere-theme="google-messages"] { --gm-sidebar: 0px; }
+    #gm-shell .gm-app-header { padding-inline: 8px; gap: 6px; }
+    #gm-shell .gm-brand { font-size: 19px; }
+    #gm-shell .gm-status { max-width: 80px; padding-inline: 6px; }
+    #gm-sidebar { width: min(320px, 88vw); z-index: 3; box-shadow: 12px 0 40px #0006; }
+    #gm-nav-backdrop:not([hidden]) { display: block; position: absolute; inset: var(--gm-header) 0 0; background: #0008; pointer-events: auto; z-index: 2; }
+    #gm-back { display: grid !important; }
+    #gm-shell .gm-chat-header { padding-inline: 8px; }
+    #gm-shell .gm-overlay { padding: 0; }
+    #gm-shell .gm-settings-window { height: 100dvh; width: 100%; border-radius: 0; }
+    #gm-shell .gm-settings-layout { flex-direction: column; }
+    #gm-settings-tabs { width: 100%; display: flex; overflow-x: auto; flex-shrink: 0; border-right: 0; border-bottom: 1px solid var(--guinevere-border); padding: 6px; }
+    #gm-settings-tabs button { width: auto; white-space: nowrap; }
+    #gm-settings-panels { padding: 12px; }
+    #gm-shell .gm-appearance-window { border-radius: 0; width: 100%; height: 100dvh; max-height: none; }
 }

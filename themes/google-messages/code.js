@@ -1,194 +1,147 @@
-import { select2ChoiceClickSubscribe } from "../../../../../utils.js";
-import { world_names } from "../../../../../world-info.js";
-import { eventSource, event_types, name1 } from "../../../../../../script.js";
-import { user_avatar } from "../../../../../personas.js";
-import { debounce } from "../../../../../utils.js";
-import { debounce_timeout } from "../../../../../constants.js";
+export async function execute(theme) {
+    const root = theme.element("#gm-shell");
+    const find = selector => root.querySelector(selector);
+    const settings = find("#gm-settings"), profile = find("#gm-profile"), appearance = find("#gm-appearance");
+    const options = theme.settings.get({ collapsed: false, palette: "google", background: false });
+    const panels = theme.st.listPanels();
+    const categories = new Map();
+    const labels = { responseSettings: "Generation", connectionSettings: "Connections", advancedFormatting: "Prompts & formatting", worldInfo: "Lorebooks", userSettings: "Interface & behavior", backgrounds: "Backgrounds", extensions: "Extensions", personas: "Personas", characters: "Contacts & groups" };
+    let returnFocus;
+    let avatarRevision = 0;
+    function avatarSource(source) {
+        if (!avatarRevision || /^(data:|blob:)/i.test(source)) return source;
+        const url = new URL(source, document.baseURI);
+        url.searchParams.set("gm-avatar", String(avatarRevision));
+        return url.href;
+    }
 
-/**
- * Records the detachable elements from the old div to the new div.
- * @type {Object.<string, string>}
- * @property {string} key - The id of the old div (top-settings-holder).
- * @property {string} value - The id of the new div (google-st-preview).
- */
-const HTML_CONTAINER = $("#google-messages-container");
-const ATTACH_TO_FROM = {};
-const profileDataDebounce = debounce(setProfile, debounce_timeout.quick);
-
-function setProfile() {
-	if (name1.length > 0) {
-		// Replace the text with the selected persona's name
-		$("#google-message-modal-profile-name").text(`Hi, ${name1}!`);
-		// Replace the image with the selected persona's image
-		$("#google-message-modal-profile-icon").attr(
-			"src",
-			`User Avatars/${user_avatar}`,
-		);
-		// Replace the settings icon with the selected persona's image
-		$("#google-message-settings-profile-icon").attr(
-			"src",
-			`User Avatars/${user_avatar}`,
-		);
-	}
-}
-
-/**
- * Executes the Google Messages theme code.
- */
-export async function execute() {
-	const topSettingsHolder = $("#top-settings-holder");
-	if (!topSettingsHolder.length) {
-		throw Error("Failed to find top-settings-holder.");
-	}
-
-	try {
-		// Add logic to google-message-settings-icon (Profile icon)
-		HTML_CONTAINER.find("#google-message-settings-icon").on("click", () => {
-			$("#google-message-settings-modal").toggle();
-		});
-
-		// Add logic to google-message-modal-settings-button (ST Settings button)
-		HTML_CONTAINER.find("#google-message-modal-settings-button").on("click", () => {
-			$("#google-message-settings-modal").hide();
-			$("#google-message-st-settings-modal").toggle();
-		});
-
-		// Add logic to google-message-st-modal-close (close button)
-		HTML_CONTAINER.find("#google-message-st-modal-close").on("click", () => {
-			$("#google-message-st-settings-modal").hide();
-		});
-
-		setProfile();
-
-		// Append HTML_CONTAINER above top-bar
-		topSettingsHolder.before(HTML_CONTAINER);
-
-		const stOptions = HTML_CONTAINER.find("#google-st-options");
-		const stPreviewer = HTML_CONTAINER.find("#google-st-preview");
-
-		// Grab data from top-settings-holder
-		const drawerButtons = topSettingsHolder.find(".drawer");
-
-		drawerButtons.each(function () {
-			const button = $(this).find(".drawer-toggle");
-			const backupId = $(this).attr("id"); // for drawer contents with no id
-
-			// Copy button to stOptions
-			stOptions.append(button.clone());
-			const stButton = stOptions.find(".drawer-toggle").last();
-
-			// Copy all children of drawer-content to stPreviewer
-			const drawerContent = $(this).find(".drawer-content");
-			if (!drawerContent.attr("id")) {
-				drawerContent.attr("id", backupId);
-			}
-
-			drawerContent.detach();
-			stPreviewer.append(drawerContent);
-			stPreviewer
-				.find(`#${drawerContent.attr("id")}`)
-				.addClass("google-message-st-option-preview");
-
-			// Alter on click to show/hide the cloned div in the previewer
-			stButton.on("click", () => {
-				stPreviewer.children().css("display", "none");
-				drawerContent.css("display", "contents");
-				stButton.children().addClass("openIcon");
-				stButton.children().removeClass("closedIcon");
-				stButton
-					.siblings()
-					.children()
-					.removeClass("openIcon")
-					.addClass("closedIcon");
-			});
-
-			ATTACH_TO_FROM[$(this).attr("id")] = drawerContent.attr("id");
-		});
-
-		// Handles assignment of select2 code to the new div
-		const newClick = stPreviewer.find("#WorldInfo").find("#world_info");
-		const oldSpan = stPreviewer
-			.find("#WorldInfo")
-			.find(".range-block-range")
-			.find("span");
-		oldSpan.remove();
-
-		newClick.select2({
-			width: "100%",
-			placeholder: "No Worlds active. Click here to select.",
-			allowClear: true,
-			closeOnSelect: false,
-		});
-
-		select2ChoiceClickSubscribe(
-			newClick,
-			(target) => {
-				const name = $(target).text();
-				const selectedIndex = world_names.indexOf(name);
-				if (selectedIndex !== -1) {
-					$("#world_editor_select").val(selectedIndex).trigger("change");
-					console.log("Quick selection of world", name);
-				}
-			},
-			{ buttonStyle: true, closeDrawer: true },
-		);
-	} catch (error) {
-		throw Error(error);
-	}
-
-	eventSource.on(event_types.SETTINGS_UPDATED, profileDataDebounce);
-
-	topSettingsHolder.css("display", "none");
-	$("#top-bar").css("display", "none");
-}
-
-export function disable() {
-	const topSettingsHolder = $("#top-settings-holder");
-
-	// Detach all elements from the new div to the old div
-	const stPreviewer = HTML_CONTAINER.find("#google-st-preview");
-
-	for (const [key, value] of Object.entries(ATTACH_TO_FROM)) {
-		const oldDrawerContent = topSettingsHolder.find(`#${key}`);
-		const newDrawerContent = stPreviewer.find(`#${value}`);
-
-		newDrawerContent.removeClass("google-message-st-option-preview");
-
-		// Clear all styles
-		newDrawerContent.attr("style", "");
-
-		newDrawerContent.detach();
-		oldDrawerContent.append(newDrawerContent);
-	}
-
-	const oldClick = topSettingsHolder.find("#WorldInfo").find("#world_info");
-	const stSpan = topSettingsHolder
-		.find("#WorldInfo")
-		.find(".range-block-range")
-		.find("span");
-	stSpan.remove();
-
-	oldClick.select2({
-		width: "100%",
-		placeholder: "No Worlds active. Click here to select.",
-		allowClear: true,
-		closeOnSelect: false,
-	});
-
-	select2ChoiceClickSubscribe(
-		oldClick,
-		(target) => {
-			const name = $(target).text();
-			const selectedIndex = world_names.indexOf(name);
-			if (selectedIndex !== -1) {
-				$("#world_editor_select").val(selectedIndex).trigger("change");
-				console.log("Quick selection of world", name);
-			}
-		},
-		{ buttonStyle: true, closeDrawer: true },
-	);
-
-	// remove display element from top-settings-holder
-	topSettingsHolder.css("display", "flex");
-	$("#top-bar").css("display", "flex");
+    function closeOverlays() {
+        settings.hidden = profile.hidden = appearance.hidden = true;
+        find("#gm-profile-button").setAttribute("aria-expanded", "false");
+    }
+    function openOverlay(element, focusTarget) {
+        returnFocus = document.activeElement;
+        closeOverlays();
+        element.hidden = false;
+        focusTarget?.focus();
+    }
+    function closeAndFocus() { closeOverlays(); if (returnFocus?.isConnected) returnFocus.focus(); }
+    function setNavigation(open, save = false) {
+        theme.setAttribute(document.body, "data-gm-navigation", open ? "open" : "closed");
+        find("#gm-menu").setAttribute("aria-expanded", String(open));
+        find("#gm-nav-backdrop").hidden = !open;
+        if (save) { options.collapsed = !open; theme.settings.set({ collapsed: !open }); }
+    }
+    function applyAppearance() {
+        const google = { text: "#e3e3e3", muted: "#a9adb3", surface: "#202124", chatSurface: "#202124", accent: "#a8c7fa", border: "#414448" };
+        theme.appearance.override(options.palette === "google" ? google : Object.fromEntries(Object.keys(google).map(key => [key, null])));
+        theme.setAttribute(document.body, "data-gm-background", String(options.background));
+        find("#gm-palette").value = options.palette;
+        find("#gm-background").checked = options.background;
+    }
+    const workspace = theme.createPanelWorkspace({ target: find("#gm-settings-panels"), onSelect(entry) { find("#gm-settings-title").textContent = entry.button.textContent; } });
+    for (const descriptor of panels) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = labels[descriptor.key] || descriptor.label;
+        find("#gm-settings-tabs").append(button);
+        theme.ownElement(button);
+        workspace.add({ panel: descriptor.element, button });
+        categories.set(descriptor.key, descriptor.element);
+    }
+    workspace.selectFirst();
+    function openPanel(key) {
+        const panel = categories.get(key);
+        if (!panel) return;
+        workspace.select(panel);
+        openOverlay(settings, find("#gm-settings-close"));
+        if (matchMedia("(max-width: 760px)").matches) setNavigation(false);
+    }
+    theme.on(root, "click", event => {
+        const button = event.target.closest("[data-gm-panel]");
+        if (button) openPanel(button.dataset.gmPanel);
+    });
+    theme.on(find("#gm-menu"), "click", () => setNavigation(document.body.dataset.gmNavigation !== "open", true));
+    theme.on(find("#gm-nav-backdrop"), "click", () => setNavigation(false));
+    theme.on(find("#gm-back"), "click", () => setNavigation(true));
+    theme.on(find("#gm-settings-close"), "click", closeAndFocus);
+    theme.on(find("#gm-appearance-close"), "click", closeAndFocus);
+    theme.on(find("#gm-profile-close"), "click", closeAndFocus);
+    for (const overlay of [settings, appearance]) theme.on(overlay, "click", event => { if (event.target === overlay) closeAndFocus(); });
+    theme.on(find("#gm-profile-button"), "click", () => {
+        if (!profile.hidden) return closeAndFocus();
+        openOverlay(profile, find("#gm-profile-close"));
+        find("#gm-profile-button").setAttribute("aria-expanded", "true");
+    });
+    function openAppearance() { openOverlay(appearance, find("#gm-palette")); }
+    theme.on(find("#gm-appearance-button"), "click", openAppearance);
+    theme.on(find("#gm-profile-appearance"), "click", openAppearance);
+    theme.on(find("#gm-palette"), "change", event => { options.palette = event.target.value; theme.settings.set({ palette: options.palette }); applyAppearance(); });
+    theme.on(find("#gm-background"), "change", event => { options.background = event.target.checked; theme.settings.set({ background: options.background }); applyAppearance(); });
+    theme.on(find("#gm-connection"), "click", () => openPanel("connectionSettings"));
+    theme.on(find("#gm-chat-details"), "click", () => openPanel("characters"));
+    theme.on(find("#gm-chat-actions"), "click", () => $("#options_button").trigger("click"));
+    theme.on(find("#gm-home"), "click", () => {
+        // ST's own close action opens its real welcome screen.
+        const action = document.querySelector("#option_close_chat");
+        if (action && theme.st.getContext().chatId !== undefined) $(action).trigger("click");
+        closeOverlays();
+        setNavigation(false);
+    });
+    function update() {
+        const persona = theme.st.getPersona();
+        const context = theme.st.getContext();
+        const conversation = theme.st.getConversation();
+        const status = theme.st.getStatus();
+        const active = context.chatId !== undefined && context.chatId !== null;
+        find("#gm-profile-image").src = avatarSource(persona.avatarUrl);
+        find("#gm-persona-name").textContent = persona.name;
+        find("#gm-chat-name").textContent = active ? conversation.name : "Welcome";
+        find("#gm-chat-status").textContent = active ? (status.generating ? "Generating…" : conversation.isGroup ? "Group conversation" : "Conversation") : "Choose a conversation to get started";
+        find("#gm-chat-actions").disabled = !active;
+        find("#gm-connection").textContent = status.connection && status.connection !== "no_connection" ? status.connection : "Connect";
+        const list = find("#gm-persona-list");
+        list.replaceChildren();
+        for (const item of theme.st.listPersonas()) {
+            const button = document.createElement("button");
+            button.type = "button"; button.dataset.persona = item.avatar;
+            button.setAttribute("aria-pressed", String(item.avatar === persona.avatar));
+            const image = document.createElement("img"); image.src = avatarSource(item.avatarUrl); image.alt = "";
+            const name = document.createElement("span"); name.textContent = item.name;
+            button.append(image, name); list.append(button);
+        }
+    }
+    theme.on(find("#gm-persona-list"), "click", async event => {
+        const button = event.target.closest("[data-persona]");
+        if (!button) return;
+        button.disabled = true;
+        try { await theme.st.selectPersona(button.dataset.persona); if (theme.active) update(); }
+        catch { if (theme.active) find("#gm-profile-error").textContent = "Could not switch persona. Open Manage personas to try again."; }
+        finally { if (theme.active && button.isConnected) button.disabled = false; }
+    });
+    theme.on(document, "click", event => {
+        if (!profile.hidden && !profile.contains(event.target) && !find("#gm-profile-button").contains(event.target)) closeAndFocus();
+    });
+    theme.on(document, "keydown", event => {
+        const modal = !settings.hidden ? settings : !appearance.hidden ? appearance : null;
+        if (event.key === "Escape" && (modal || !profile.hidden)) { event.preventDefault(); closeAndFocus(); }
+        if (event.key === "Tab" && modal) {
+            const controls = [...modal.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')].filter(element => !element.disabled && element.getClientRects().length);
+            const first = controls[0], last = controls.at(-1);
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }
+    });
+    function refreshAvatars() { avatarRevision = Math.max(Date.now(), avatarRevision + 1); update(); }
+    for (const name of ["settingsUpdated", "personaChanged", "generationStarted", "generationEnded", "generationStopped", "onlineStatusChanged"]) theme.onST(name, update, { optional: true });
+    theme.onST("personaUpdated", refreshAvatars, { optional: true });
+    // ST rebuilds this list after avatar uploads, including same-file overwrites
+    // which do not emit PERSONA_UPDATED. Observe ST's list, never our own images.
+    const avatarList = document.getElementById("user_avatar_block");
+    if (avatarList) theme.observe(avatarList, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] }, refreshAvatars);
+    theme.onST("chatChanged", () => { update(); closeOverlays(); if (matchMedia("(max-width: 760px)").matches) setNavigation(false); }, { optional: true });
+    theme.setStyle("#top-bar", "display", "none");
+    theme.setStyle("#top-settings-holder", "display", "none");
+    setNavigation(!options.collapsed && !matchMedia("(max-width: 760px)").matches);
+    applyAppearance(); update();
 }

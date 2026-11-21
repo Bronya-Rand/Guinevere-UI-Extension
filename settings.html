@@ -23,42 +23,20 @@
                 </div>
 
                 <div class="guinevere_block flex-container flexFlowColumn">
-                    <label data-i18n="Theme Name" for="guinevere-theme">Theme Name</label>
-                    <small data-i18n="Type the folder name of the theme you want to apply.">
-                        Type the folder name of the theme you want to apply.
-                    </small>
+                    <label data-i18n="Theme" for="guinevere-theme-select">Theme</label>
                     <div class="flex-container flexFlowRow">
-                        <input type="text" id="guinevere-theme-input" class="text_pole"
-                            placeholder="Name of the the theme folder" />
-                        <small id="guinevere-theme-text-button" class="menu_button menu_button_icon">
-                            <div class="fa-solid fa-check"></div>
-                        </small>
+                        <select id="guinevere-theme-select" class="text_pole" aria-label="Guinevere theme">
+                            <option value="">Loading themes...</option>
+                        </select>
+                        <button type="button" id="guinevere-refresh-themes" class="menu_button" data-i18n="Refresh Themes">Refresh Themes</button>
                     </div>
-
-                    <p style="margin: 0;">
-                        <small data-i18n="Note: Themes can be made/applied by going to the ">Note: Themes can be
-                            made/applied by
-                            going to the </small>
-                        <small><b>themes</b></small>
-                        <small data-i18n=" folder (typically in "> folder (typically in </small>
-                        <small><i>data/default-user/extensions/Guinevere-UI-Extension</i>). </small>
-                        <small data-i18n="Place your theme data in a folder.">Place your theme data in a
-                            folder.</small>
-                    </p>
-
-                    <p style="margin: 0;">
-                        <small data-i18n="Unsure where to start? Type ">Unsure where to start? Type </small>
-                        <small><b>google-messages</b></small>
-                        <small data-i18n=" to apply the default Google Messages theme or click ">
-                            to apply the default Google Messages theme or click </small>
-                        <small><a
-                                href="https://github.com/Bronya-Rand/Guinevere-UI-Extension?tab=readme-ov-file#creating-your-own-theme-for-guinevere"
-                                class="notes-link" target="_blank" rel="noopener noreferrer" data-i18n="here">
-                                here
-                            </a></small>
-                        <small data-i18n=" to learn how to create your own theme."> to learn how to create your own
-                            theme.</small>
-                    </p>
+                    <div class="flex-container flexFlowRow">
+                        <button type="button" id="guinevere-import-theme" class="menu_button" disabled data-i18n="Import Theme ZIP">Import Theme ZIP</button>
+                        <input type="file" id="guinevere-theme-upload" accept=".zip,application/zip,application/x-zip-compressed" hidden />
+                    </div>
+                    <small id="guinevere-import-status" role="status" aria-live="polite"></small>
+                    <small>Theme packs can run JavaScript. Import packs from authors you trust.</small>
+                    <small><a href="https://github.com/Bronya-Rand/Guinevere-UI-Extension#theme-zip-import" target="_blank" rel="noopener noreferrer">Theme import setup and pack format</a></small>
                 </div>
 
                 <div class="guinevere_block flex-container flexFlowRow alignitemscenter justifyCenter">
@@ -73,7 +51,7 @@
                         <span>Guinevere UI Extension Version
                             <a id="guinevere-version-number"
                                 href="https://github.com/Bronya-Rand/Guinevere-UI-Extension" target="_blank"
-                                rel="noopener noreferrer">2.0.0 (Beta 1)</a></span>
+                                rel="noopener noreferrer">2.0.0 (Beta 4)</a></span>
                     </small>
                 </div>
             </div>

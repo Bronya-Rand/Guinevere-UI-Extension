@@ -41,9 +41,17 @@ Guinevere Settings can be found under _Extensions_ > `Guinevere (UI Theme Extens
 
 ## Prerequisites
 
-A SillyTavern that supports extensions. Preferably a modern one.
+A modern version of SillyTavern with the **(optional)** Guinevere Theme Installer server plugin installed (see [Server Plugin](#server-plugin-guinevere-theme-installer)).
 
 ## Installation
+
+### Server Plugin (Guinevere-Theme-Installer)
+```bash
+cd plugins
+git clone https://github.com/Bronya-Rand/Guinevere-Theme-Installer
+```
+
+### UI Plugin (Guinevere-UI-Extension)
 
 #### Via Download Extensions & Assets (Easiest)
 
@@ -52,11 +60,9 @@ A SillyTavern that supports extensions. Preferably a modern one.
 3. Scroll down to find `Guinevere UI Extension` and click the Download button.
 4. Refresh the SillyTavern page.
 5. Click on _Extensions_ again and click down on the `Guinevere (UI Theme Extension)` dropdown and toggle _Enable Guinevere_.
-6. Install a *Guinevere* theme to your SillyTavern data folder (`data/default-user/extensions/Guinevere-UI-Extension/themes`) or use the included Google Messages theme (google-messages)!
-    > Make sure all the theme files are in a folder.
-7. Click the check-box to save the theme.
-8. Click the Apply Theme box.
-9. Profit.
+6. Choose **Google Messages (Legacy)** from the **Theme** dropdown.
+7. Click **Apply Theme**.
+8. To install additional theme packs, see [Theme ZIP import](#theme-zip-import).
 
 #### Via Install Extension
 
@@ -64,13 +70,34 @@ A SillyTavern that supports extensions. Preferably a modern one.
 2. Paste in the following **link** into the text field and click Save: `https://github.com/Bronya-Rand/Guinevere-UI-Extension`.
 3. Refresh the SillyTavern page.
 4. Click on _Extensions_ again and click down on the `Guinevere (UI Theme Extension)` dropdown and toggle _Enable Guinevere_.
-5. Install a *Guinevere* theme to your SillyTavern data folder (`data/default-user/extensions/Guinevere-UI-Extension/themes`) or use the included Google Messages theme (google-messages)!
-    > Make sure all the theme files are in a folder.
-6. Click the check-box to save the theme.
-7. Click the Apply Theme box.
-8. Profit.
+5. Choose **Google Messages (Legacy)** from the **Theme** dropdown.
+6. Click **Apply Theme**.
+7. To install additional theme packs, see [Theme ZIP import](#theme-zip-import).
+
+## Theme ZIP import
+
+**Import Theme ZIP** installs theme packs on the ST server through the optional [Guinevere Theme Installer](server-plugin/README.md). Install the plugin following the steps [here](#server-plugin-guinevere-theme-installer), set `enableServerPlugins` to *true* in your `config.yaml` file, restart ST, and click **Refresh Themes**. Guinevere must be installed for each current user to import packs; global-only installations can use the dropdown but need a regular per-user installation of Guinevere for uploads.
+
+After setup, choose a ZIP file with **Import Theme ZIP**. Guinevere validates and installs it, refreshes the dropdown, and selects the new theme. Enable Guinevere and click **Apply Theme** to activate it. Existing themes are not overwritten, and importing does not execute theme code.
+
+The dropdown shows human-readable theme names. Without the server plugin, it uses `themes/registry.json` plus any existing saved theme selection. With the plugin, it also discovers theme folders in the current user's and global Guinevere installations. For bundled themes, add their folder IDs to the registry when shipping them. See the [pack format and setup instructions](server-plugin/README.md) for ZIP structure, stable theme IDs, and supported limits.
+
+> [!NOTE]
+> If you wish not to use Guinevere Theme Installer, simply extract the theme's ZIP file into `data/<USER>/extensions/Guinevere-UI-Extension/themes`. Then edit `registry.json` to add the name of the theme's folder into the themes list.
+
+## Google Messages
+
+The new **Google Messages** theme is available in the dropdown alongside Legacy. Its first slice adds responsive navigation, a native settings workspace, persona switching, and saved appearance preferences while retaining ST's existing chat and composer. See [the theme's current scope](themes/google-messages/README.md) for features included now and upcoming conversation/VN work. Existing saved selections remain on Legacy.
+
+## Google Messages (Legacy)
+
+The original Google-style profile popover and settings modal are preserved as **Google Messages (Legacy)** in `themes/google-messages-legacy`. Selections saved before the rename migrate automatically to Legacy once, with a notification. New selections of **Google Messages** use the new theme; Legacy remains independently selectable.
+
+The extension waits for SillyTavern to finish initializing before applying an enabled theme. Apply/reset operations run in sequence. If a theme fails to load, Guinevere removes its partial changes after calling its cleanup function. A theme whose cleanup fails is retained so its ST controls are not deleted; refresh before trying another theme.
 
 ## Creating your own theme for Guinevere
+
+Themes can use [shared session helpers](helpers/README.md) for panel movement, event and timer cleanup, reversible changes, persistent options per theme, and colors inherited from ST. The loader passes the session to `execute(theme)` and disposes it before removing theme assets. The original zero-argument theme interface remains supported.
 
 See the `template` folder in your Guinevere's theme folder as a starter to make your own theme! Just make sure to adhere to these points:
 
@@ -80,6 +107,6 @@ See the `template` folder in your Guinevere's theme folder as a starter to make 
 4. Make sure you test your theme rigurously. Especially when it comes to resetting. People are gonna wonder why your theme breaks other themes if you don't reset it properly and not recommend it.
 5. Don't be a dolt. Just do this for fun and not of malice.
 
-Refer to exisitng HTML/CSS/JS on the internet and the Google Messages theme as references to make your first Guinevere theme.
+Refer to exisitng HTML/CSS/JS on the internet and the Google Messages (Legacy) theme as references to make your first Guinevere theme.
 
-The Guinevere UI Extension, the Guinevere UI Extension Code, Copyright 2025 Bronya-Rand. All rights reserved. 
+The Guinevere UI Extension, the Guinevere UI Extension Code, Copyright 2025 Bronya-Rand. All rights reserved.

@@ -8,3 +8,17 @@
 .guinevere_block {
 	width: 100%;
 }
+
+/* Theme defaults follow ST live. Theme CSS or session.appearance.override()
+   can replace these variables without changing ST's own color settings. */
+body[data-guinevere-theme] {
+	--guinevere-text: var(--SmartThemeBodyColor, #dcdcd2);
+	--guinevere-muted: var(--SmartThemeEmColor, #919191);
+	--guinevere-surface: var(--SmartThemeBlurTintColor, #171717);
+	--guinevere-chat-surface: var(--SmartThemeChatTintColor, #171717);
+	--guinevere-user-surface: var(--SmartThemeUserMesBlurTintColor, rgba(0, 0, 0, 0.3));
+	--guinevere-character-surface: var(--SmartThemeBotMesBlurTintColor, rgba(60, 60, 60, 0.3));
+	--guinevere-border: var(--SmartThemeBorderColor, rgba(0, 0, 0, 0.5));
+	--guinevere-accent: var(--SmartThemeQuoteColor, #e18a24);
+	--guinevere-shadow: var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.5));
+}

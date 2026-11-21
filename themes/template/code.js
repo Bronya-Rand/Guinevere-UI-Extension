@@ -7,25 +7,30 @@
  * as well as jQuery and the ST codebase itself. You may need to call some ST functions
  * that are documented or undocumented.
  *
- * While you can use the 'google-messages' theme as a reference, that code is overly
+ * While you can use the 'google-messages-legacy' theme as a reference, that code is overly
  * complex and may be difficult to understand. This template is meant to be a simpler
  * example to get you started.
  */
 
-const HTML_CONTAINER = $("#template-container");
-
 /**
  * Executes the Template theme code.
- * @note Breaking Change as of Guinevere 2.0: `auto` and `themeDiv` parameters are now removed.
- * It is now recommended to make a container of your HTML contents in your theme's HTML file.
+ * Guinevere passes a fresh session for tracked changes and persistent options.
+ * Themes with an existing zero-argument execute() still work.
  */
-export async function execute() {
+export async function execute(theme) {
+	// Resolve DOM nodes here: the module is cached across theme applications.
+	const HTML_CONTAINER = $(theme.element("#template-container"));
+	const options = theme.settings.get({ exampleText: "Place HTML code here" });
 	try {
 		// Your code here (e.g. event listeners, logic, etc.)
 		// Preferably assign jQuery logic to the new stuff you added to your theme.
+		if (!HTML_CONTAINER.length) throw new Error("Template container not found.");
+		HTML_CONTAINER.find("p").text(options.exampleText);
+		// Save an option from your own controls with theme.settings.set({ ... }).
+		// Use theme.on(), theme.movePanel(), etc. for automatic cleanup.
 		console.log("Template theme code executed.");
 	} catch (error) {
-		throw Error(error);
+		throw error;
 	}
 }
 
@@ -33,5 +38,5 @@ export async function execute() {
  * Disables the Template theme code.
  */
 export function disable() {
-	// Your removal code here (if applicable)
+	// Optional custom cleanup. The loader disposes helper-owned changes afterward.
 }

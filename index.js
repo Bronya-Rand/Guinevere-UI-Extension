@@ -1,257 +1,327 @@
-import { extension_settings } from "../../../extensions.js";
 import {
-	extensionName,
-	extensionFolderPath,
+	event_types,
+	eventSource,
+	saveSettingsDebounced,
+} from "../../../../script.js";
+import { extension_settings, getContext } from "../../../extensions.js";
+import {
 	defaultSettings,
+	extensionFolderPath,
+	extensionName,
 } from "./constants.js";
-import { saveSettingsDebounced } from "../../../../script.js";
+import { createThemeSession } from "./helpers/theme-session.js";
+import { loadThemeRegistry, uploadThemePack } from "./helpers/theme-registry.js";
+import { getRequestHeaders } from "../../../../script.js";
 
 const loadedThemeElements = {
 	css: [],
 	htmlElements: [],
 	js: null,
+	session: null,
 };
+let themeOperation = Promise.resolve();
 
-async function loadSettings() {
-	extension_settings[extensionName] = extension_settings[extensionName] || {};
-	if (Object.keys(extension_settings[extensionName]).length === 0) {
-		Object.assign(extension_settings[extensionName], defaultSettings);
-	}
-
-	$("#guinevere-enable").prop(
-		"checked",
-		extension_settings[extensionName].enabled,
-	);
-	$("#guinevere-theme-input").val(extension_settings[extensionName].theme);
-
-	// If enabled on startup, apply the theme
-	if (extension_settings[extensionName].enabled) {
-		applyTheme(true);
-	}
+// Serialize all DOM changes, including resets requested while a theme is loading.
+function queueThemeOperation(operation) {
+	const result = themeOperation.then(operation);
+	themeOperation = result.catch(() => {});
+	return result;
 }
 
-// Handles the enabling/disabling of Guinevere.
+// IDs are distinct now; old saved selections are migrated once in loadSettings().
+function resolveThemeName(name) {
+	const value = String(name ?? "").trim();
+	return value;
+}
+
+function loadSettings() {
+	const settings = (extension_settings[extensionName] = {
+		...defaultSettings,
+		...extension_settings[extensionName],
+	});
+
+	if (settings.settingsVersion < 1) {
+		const migrated = settings.theme === "google-messages";
+		if (migrated) settings.theme = "google-messages-legacy";
+		if (settings.lastSuccessfulTheme === "google-messages") settings.lastSuccessfulTheme = "google-messages-legacy";
+		settings.theme = resolveThemeName(settings.theme);
+		settings.lastSuccessfulTheme = resolveThemeName(
+			settings.lastSuccessfulTheme,
+		);
+		settings.settingsVersion = 1;
+		saveSettingsDebounced();
+		if (migrated) {
+			toastr.info(
+				"Your Google Messages theme is now named Google Messages (Legacy). Your selection was migrated automatically.",
+			);
+		}
+	}
+
+	$("#guinevere-enable").prop("checked", settings.enabled);
+}
+
 function onThemeBoxClick(event) {
-	const value = Boolean($(event.target).prop("checked"));
-	extension_settings[extensionName].enabled = value;
+	const enabled = Boolean($(event.target).prop("checked"));
+	extension_settings[extensionName].enabled = enabled;
 	saveSettingsDebounced();
-	if (!value) {
-		resetTheme();
-	}
+	if (!enabled) void resetTheme();
 }
 
-// Handles the input box for theme selection.
 function onThemeTextChange() {
-	const value = $("#guinevere-theme-input").val();
+	const value = resolveThemeName($("#guinevere-theme-select").val());
 	extension_settings[extensionName].theme = value;
 	saveSettingsDebounced();
-	toastr.success("Saved selected theme successfully.");
 }
 
-// Handles the application of Guinevere themes.
-async function onThemeApplyClick() {
+async function refreshThemes() {
+	try {
+		const selected = extension_settings[extensionName].theme;
+		const catalog = await loadThemeRegistry(selected);
+		const select = document.getElementById("guinevere-theme-select");
+		select.replaceChildren(new Option("Select a theme", ""));
+		for (const theme of catalog.themes) select.add(new Option(theme.name, theme.id));
+		select.value = extension_settings[extensionName].theme;
+		$("#guinevere-import-theme").prop("disabled", !catalog.installer?.canImport);
+		$("#guinevere-import-status").text(catalog.installer?.canImport ? "Import a theme ZIP, then Apply Theme." : catalog.installer?.reason || "ZIP import needs the optional companion installer.");
+	} catch (error) { toastr.error(error.message, undefined, { escapeHtml: true }); }
+}
+
+async function importTheme(event) {
+	const input = event.target;
+	if (!input.files?.[0]) return;
+	$("#guinevere-import-theme").prop("disabled", true);
+	try {
+		const result = await uploadThemePack(input.files[0], getRequestHeaders);
+		extension_settings[extensionName].theme = result.id;
+		saveSettingsDebounced();
+		toastr.success("Theme imported. Click Apply Theme to activate it.");
+	} catch (error) { toastr.error(error.message, undefined, { escapeHtml: true }); }
+	finally { input.value = ""; await refreshThemes(); }
+}
+
+function onThemeApplyClick() {
 	if (!extension_settings[extensionName].enabled) {
 		toastr.error("Guinevere is not enabled.");
 		return;
 	}
-	await applyTheme();
+	void applyTheme();
 }
 
-// Handles the removal of Guinevere themes.
 function onThemeRemoveClick() {
-	resetTheme();
 	extension_settings[extensionName].enabled = false;
 	$("#guinevere-enable").prop("checked", false);
 	saveSettingsDebounced();
+	void resetTheme();
 }
 
-/**
- * Removes all active theme elements from the DOM.
- * @param {boolean} silent - Whether to suppress the success message.
- */
-async function resetTheme(silent = false) {
-	// Unload CSS
-	for (const linkElement of loadedThemeElements.css) {
-		linkElement.remove();
+async function unloadTheme() {
+	// Restore borrowed ST nodes before jQuery removes their host. If restoration
+	// fails, retain the host and references so reset can be retried.
+	if (typeof loadedThemeElements.js?.disable === "function") {
+		await loadedThemeElements.js.disable(loadedThemeElements.session);
 	}
-	loadedThemeElements.css = [];
-
-	// Unload HTML
-	for (const htmlElement of loadedThemeElements.htmlElements) {
-		htmlElement.remove();
-	}
-	loadedThemeElements.htmlElements = [];
-
-	// Unload JS
-	if (
-		loadedThemeElements.js &&
-		typeof loadedThemeElements.js.disable === "function"
-	) {
-		try {
-			await loadedThemeElements.js.disable();
-		} catch (error) {
-			console.error("Error while disabling theme JS:", error);
-			toastr.error(
-				"There was an error while disabling the theme's JavaScript code. Refresh SillyTavern to ensure all theme code is removed and contact the theme developer to fix this error.",
-			);
-		}
-	} else {
-		console.log(
-			`[${extensionName}] No JS to unload for theme "${extension_settings[extensionName].lastSuccessfulTheme}".`,
-		);
-	}
+	await loadedThemeElements.session?.dispose();
 	loadedThemeElements.js = null;
-	extension_settings[extensionName].lastSuccessfulTheme = ""; 
+	loadedThemeElements.session = null;
+	for (const element of loadedThemeElements.htmlElements) element.remove();
+	loadedThemeElements.htmlElements = [];
+	for (const element of loadedThemeElements.css) element.remove();
+	loadedThemeElements.css = [];
+	extension_settings[extensionName].lastSuccessfulTheme = "";
 	saveSettingsDebounced();
-	if (!silent) {
-		toastr.success("Reset back to default SillyTavern theme.");
+}
+
+function reportResetError(error) {
+	console.error(`[${extensionName}] Failed to reset theme:`, error);
+	toastr.error(
+		"The theme could not restore SillyTavern. Refresh the page before applying another theme. Check the console for details.",
+	);
+}
+
+function resetTheme(silent = false) {
+	return queueThemeOperation(async () => {
+		try {
+			await unloadTheme();
+			if (!silent) toastr.success("Reset back to the original SillyTavern UI.");
+		} catch (error) {
+			reportResetError(error);
+		}
+	});
+}
+
+function validateManifest(manifest) {
+	if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
+		throw new Error("Invalid theme manifest.");
+	}
+	if (!["css", "html", "full"].includes(manifest.type || "full")) {
+		throw new Error(`Unknown theme type "${manifest.type}".`);
+	}
+
+	for (const type of ["css", "html"]) {
+		if (
+			manifest.files?.[type] !== undefined &&
+			!Array.isArray(manifest.files[type])
+		) {
+			throw new Error(`manifest.files.${type} must be an array.`);
+		}
+	}
+	const files = [
+		...(manifest.files?.css || []),
+		...(manifest.files?.html || []),
+	];
+	if (manifest.files?.js !== undefined) files.push(manifest.files.js);
+	for (const file of files) {
+		if (
+			typeof file !== "string" ||
+			!file.trim() ||
+			/[\\?#:]/.test(file) ||
+			file.startsWith("/") ||
+			file.split("/").includes("..")
+		) {
+			throw new Error(
+				"Theme files must use relative file paths within the theme folder.",
+			);
+		}
 	}
 }
 
-/**
- * Applies a Guinevere theme to the page.
- * @param {boolean} silent - Whether to suppress the success message.
- */
-async function applyTheme(silent) {
-	// Ensure the last theme is cleaned up before applying a new one
-	await resetTheme(true);
+function applyTheme(silent = false) {
+	const themeName = resolveThemeName(extension_settings[extensionName].theme);
 
-	const themeName = extension_settings[extensionName].theme;
-	if (!themeName) {
-		toastr.error("No theme specified.");
-		return;
-	}
+	return queueThemeOperation(async () => {
+		if (!extension_settings[extensionName].enabled) return;
 
-	const themePath = `${extensionFolderPath}/themes/${themeName}`;
-	const manifestPath = `${themePath}/manifest.json`;
+		let applying = false;
+		try {
+			if (
+				!themeName ||
+				/[/\\?#:]/.test(themeName) ||
+				[".", ".."].includes(themeName)
+			) {
+				throw new Error("Specify a theme folder name.");
+			}
 
-	try {
-		const manifest = await $.getJSON(manifestPath);
-		const themeType = manifest.type || "full";
+			const themePath = `${extensionFolderPath}/themes/${themeName}`;
+			const manifest = await $.getJSON(`${themePath}/manifest.json`);
 
-		switch (themeType) {
-			case "css":
-				await applyCssTheme(themePath, manifest);
-				break;
-			case "html":
-			case "full":
+			// Validate the selection before removing a working theme.
+			validateManifest(manifest);
+
+			await unloadTheme();
+			applying = true;
+			loadedThemeElements.session = createThemeSession({
+				id: themeName,
+				getSettings: () => extension_settings[extensionName],
+				saveSettings: saveSettingsDebounced,
+				getContext,
+			});
+			await applyCssTheme(themePath, manifest);
+			if (manifest.type !== "css")
 				await applyHtmlTheme(themePath, manifest, themeName);
-				break;
-			default:
-				toastr.error(`Unknown theme type "${themeType}" in manifest.`);
-				return;
-		}
-
-		extension_settings[extensionName].lastSuccessfulTheme = themeName;
-		if (!silent) {
-			toastr.success(
-				`Applied '${manifest.name || themeName}' theme successfully.`,
+			extension_settings[extensionName].lastSuccessfulTheme = themeName;
+			saveSettingsDebounced();
+			if (!silent && extension_settings[extensionName].enabled) {
+				toastr.success(
+					`Applied '${manifest.name || themeName}' theme successfully.`,
+				);
+			}
+		} catch (error) {
+			console.error(
+				`[${extensionName}] Failed to load/apply '${themeName}':`,
+				error,
+			);
+			if (applying) {
+				try {
+					await unloadTheme();
+				} catch (resetError) {
+					reportResetError(resetError);
+				}
+			}
+			toastr.error(
+				`Failed to load/apply theme "${themeName}". Check the console for details.`,
 			);
 		}
-	} catch (error) {
-		console.error(`Failed to load/apply theme '${themeName}':`, error);
-		toastr.error(
-			`Failed to load/apply theme "${themeName}". Check the console for details.`,
+	});
+}
+
+function applyCssFile(cssPath) {
+	return new Promise((resolve, reject) => {
+		const link = document.createElement("link");
+		link.rel = "stylesheet";
+		link.href = cssPath;
+		const finish = (error) => {
+			clearTimeout(timeout);
+			link.onload = link.onerror = null;
+			if (error) reject(error);
+			else resolve();
+		};
+		const timeout = setTimeout(
+			() => finish(new Error(`Timed out loading CSS: ${cssPath}`)),
+			15000,
+		);
+		link.onload = () => finish();
+		link.onerror = () => finish(new Error(`Failed to load CSS: ${cssPath}`));
+		loadedThemeElements.css.push($(link));
+		document.head.appendChild(link);
+	});
+}
+
+async function applyCssTheme(themePath, manifest) {
+	for (const file of manifest.files?.css || []) {
+		await applyCssFile(
+			`${themePath}/${file}?v=${encodeURIComponent(manifest.version || "1")}`,
 		);
 	}
 }
 
-/**
- * Applies a CSS file to the document.
- * @param {string} cssPath - The path to the CSS file.
- */
-function applyCssFile(cssPath) {
-	const link = document.createElement("link");
-	link.rel = "stylesheet";
-	link.type = "text/css";
-	link.href = cssPath;
-	document.head.appendChild(link);
-	loadedThemeElements.css.push($(link));
-}
-
-/**
- * Applies a CSS theme based on the provided manifest.
- * @param {string} themePath - The base path of the theme.
- * @param {Object} manifest - The theme's manifest object.
- */
-async function applyCssTheme(themePath, manifest) {
-	if (manifest.files?.css) {
-		for (const cssFile of manifest.files.css) {
-			applyCssFile(`${themePath}/${cssFile}`);
-		}
-	}
-}
-
-/**
- * Applies an HTML theme based on the provided manifest.
- * @param {string} themePath - The base path of the theme.
- * @param {Object} manifest - The theme's manifest object.
- * @param {string} themeName - The name of the theme being applied.
- */
 async function applyHtmlTheme(themePath, manifest, themeName) {
-	// Apply CSS first (if any)
-	await applyCssTheme(themePath, manifest);
-
-	// Apply HTML
-	if (manifest.files?.html) {
-		for (const htmlFile of manifest.files.html) {
-			const htmlContent = await $.get(`${themePath}/${htmlFile}`);
-
-			// Parse the HTML contents
-			const elements = $($.parseHTML(htmlContent.trim()));
-
-			// Inject element before the main ST UI (#top-bar), unless specified otherwise
-			const injectPoint = manifest.injectPoint || "#top-bar";
-			const injectMethod = manifest.injectMethod || "before";
-
-			for (const element of elements) {
-				const el = $(element);
-
-				switch (injectMethod) {
-					case "after":
-						$(injectPoint).after(el);
-						break;
-					case "prepend":
-						$(injectPoint).prepend(el);
-						break;
-					case "append":
-						$(injectPoint).append(el);
-						break;
-					default:
-						$(injectPoint).before(el);
-						break;
-				}
-				// Store reference for later removal
-				loadedThemeElements.htmlElements.push(el);
-			}
+	for (const file of manifest.files?.html || []) {
+		const content = await $.get(`${themePath}/${file}`);
+		const target = $(manifest.injectPoint || "#top-bar");
+		const method = manifest.injectMethod || "before";
+		if (target.length !== 1)
+			throw new Error("Theme injection point must match exactly one element.");
+		if (!["before", "after", "prepend", "append"].includes(method)) {
+			throw new Error(`Unknown theme injection method "${method}".`);
 		}
+		const elements = $($.parseHTML(content.trim()));
+		loadedThemeElements.htmlElements.push(elements);
+		target[method](elements);
 	}
-
-	// Apply JS (if any)
 	if (manifest.files?.js) {
-		const jsFile = `./themes/${themeName}/${manifest.files.js}`;
-		try {
-			const manifest = await fetch(`${themePath}/manifest.json`).then(res => res.json());
-			const module = await import(`${jsFile}?t=${manifest.version || "1"}`); // Cache-busting
-			loadedThemeElements.js = module;
-			if (typeof module.execute === "function") {
-				await module.execute();
-			}
-		} catch (error) {
-			console.error(`Failed to load JS file '${jsFile}':`, error);
-		}
+		const url = new URL(
+			`./themes/${themeName}/${manifest.files.js}`,
+			import.meta.url,
+		);
+		url.searchParams.set("v", manifest.version || "1");
+		const module = await import(url.href);
+		loadedThemeElements.js = module;
+		if (typeof module.execute === "function")
+			await module.execute(loadedThemeElements.session);
 	}
 }
 
-// This function is called when the extension is loaded
 $(document).ready(async () => {
-	const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
-	$("#extensions_settings").append(settingsHtml);
+	try {
+		const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
+		$("#extensions_settings").append(settingsHtml);
+		loadSettings();
+		$("#guinevere-enable").on("click", onThemeBoxClick);
+		$("#guinevere-apply").on("click", onThemeApplyClick);
+		$("#guinevere-reset").on("click", onThemeRemoveClick);
+		$("#guinevere-theme-select").on("change", onThemeTextChange);
+		$("#guinevere-refresh-themes").on("click", refreshThemes);
+		$("#guinevere-import-theme").on("click", () => $("#guinevere-theme-upload").trigger("click"));
+		$("#guinevere-theme-upload").on("change", importTheme);
+		await refreshThemes();
 
-	await loadSettings();
-
-	$("#guinevere-enable").on("click", onThemeBoxClick);
-	$("#guinevere-apply").on("click", onThemeApplyClick);
-	$("#guinevere-reset").on("click", onThemeRemoveClick);
-	$("#guinevere-theme-text-button").on("click", onThemeTextChange);
+		eventSource.on(event_types.APP_READY, () => {
+			if (extension_settings[extensionName].enabled) return applyTheme(true);
+		});
+	} catch (error) {
+		console.error(`[${extensionName}] Failed to initialize:`, error);
+		toastr.error(
+			"Guinevere could not initialize. Check the console for details.",
+		);
+	}
 });

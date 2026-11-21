@@ -1,0 +1,346 @@
+/* Google Messages UI */
+body[data-guinevere-theme="google-messages-legacy"] {
+	display: flex;
+}
+
+/* Google Messages PFP Settings Button */
+body[data-guinevere-theme="google-messages-legacy"] #google-message-settings-icon {
+	position: fixed;
+	top: 15px;
+	right: 19px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	z-index: 1001;
+	width: 42px; /* Set width to match the profile image */
+	height: 42px; /* Set height to match the profile image */
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-settings-profile-image {
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+/* Google Messages Profile Modal */
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal {
+	display: none;
+	z-index: 1000;
+	top: 0;
+	overflow: auto;
+	width: 100%;
+	height: 100vh; /* Full height */
+	height: 100dvh;
+	position: absolute;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-content {
+	background-color: var(--guinevere-surface, #131313);
+	position: absolute;
+	padding: 20px;
+	border-radius: 25px;
+	top: 78px;
+	right: 12px;
+	box-sizing: border-box;
+	max-width: calc(100vw - 24px);
+	/* min-height: 535px; */
+	min-height: 300px;
+	overflow-y: auto;
+	box-shadow: 0 0 10px var(--guinevere-border, rgba(0, 0, 0, 0.5));
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-google-text {
+	color: var(--guinevere-text, #dcdcd2);
+	font-size: 14px;
+	font-weight: 500;
+	text-align: center;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-profile-image {
+	width: 90px;
+	align-self: center;
+	aspect-ratio: 1 / 1;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-profile-name {
+	color: var(--guinevere-text, #dcdcd2);
+	font-size: 22px;
+	font-weight: 300;
+	text-align: center;
+	min-height: 23px;
+	margin: 0.85vh;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-settings {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-settings-button {
+	background: none;
+	border: 1px solid white;
+	border-radius: 31px;
+	width: 57%;
+	height: 40px;
+	align-self: center;
+	font-size: 14px;
+	color: var(--guinevere-text, #dcdcd2);
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-terms-div {
+	display: flex;
+	justify-content: center;
+	margin-top: 20px;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-terms {
+	color: var(--guinevere-accent, #e18a24);
+	font-size: 12px;
+	font-weight: 300;
+	text-align: center;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-general-modal {
+	display: none; /* Hidden by default */
+	position: fixed; /* Stay in place */
+	z-index: 1002; /* Sit on top */
+	left: 0;
+	top: 0;
+	width: 100%; /* Full width */
+	height: 100vh; /* Full height */
+	height: 100dvh;
+	overflow: auto; /* Enable scroll if needed */
+	background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity - background overlay */
+}
+
+/* Google Messages General Modal */
+body[data-guinevere-theme="google-messages-legacy"] .google-message-general-modal-content {
+	background-color: var(--guinevere-surface, #131313);
+	margin: 5% auto;
+	width: 95%; /* Adjust modal width as needed */
+	max-height: 90%;
+	border-radius: 10px; /* Rounded corners */
+	box-shadow: 0 4px 8px 0 var(--guinevere-border, rgba(0, 0, 0, 0.5));
+	color: var(--guinevere-text, #dcdcd2);
+	position: relative; /* To position close button */
+	padding: 10px;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-title-div {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: row;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-title {
+	color: var(--guinevere-text, #dcdcd2);
+	font-weight: 500;
+	padding: 0px 0px 0px 10px;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-close {
+	color: #aaa;
+	font-weight: bold;
+	background: none;
+	border: none;
+	position: relative;
+	bottom: 1vh;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-close:hover,
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-close:focus {
+	color: white;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-settings {
+	display: flex;
+	justify-content: start;
+	flex-direction: column;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-settings2 {
+	display: flex;
+	justify-content: center;
+	height: 100%;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options {
+	display: flex;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options::selection {
+	background-color: transparent;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options-preview {
+	display: initial;
+	justify-content: center;
+	flex-direction: column;
+	overflow-y: auto;
+	width: 100%;
+	max-height: 70vh;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .google-message-st-option-preview {
+	display: none;
+}
+
+/* Modify the modal content for mobile */
+@media screen and (min-width: 360px) {
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-modal {
+		left: 0;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-content {
+		width: 330px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-close {
+		font-size: 32px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-title {
+		font-size: 18px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-settings2 {
+		flex-direction: column;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options {
+		flex-direction: row;
+		width: unset;
+		padding: 0px 0px 5px 0px;
+		overflow-x: scroll;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-general-modal-content {
+		min-width: 0;
+		max-height: unset;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options-preview {
+		max-height: 71vh;
+		height: unset;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-title-div {
+		flex-direction: row;
+	}
+}
+
+@media screen and (min-width: 375px) {
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-content {
+		width: 340px;
+	}
+}
+
+@media screen and (min-width: 400px) {
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-content {
+		width: 385px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options {
+		flex-direction: row;
+		padding: 0px 0px 0px 8px;
+		width: unset;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options-preview {
+		max-height: 72vh;
+		height: unset;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-close {
+		font-size: 36px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-title {
+		font-size: 20px;
+	}
+}
+
+@media screen and (min-width: 500px) {
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-options {
+		flex-direction: column;
+		width: 60px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-st-modal-settings2 {
+		flex-direction: row;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-modal {
+		left: 0;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-content {
+		width: 410px;
+	}
+}
+
+@media screen and (min-width: 1000px) {
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-modal-content {
+		width: 385px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .google-message-general-modal-content {
+		min-width: 0;
+		max-height: unset;
+	}
+}
+
+/* ST Fields */
+body[data-guinevere-theme="google-messages-legacy"] #google-st-preview > .drawer-content {
+	background-color: transparent;
+	border: none;
+	position: static !important;
+	inset: auto !important;
+	width: auto !important;
+	max-width: 100% !important;
+	height: auto !important;
+	max-height: none !important;
+	min-width: 0 !important;
+	margin: 0;
+	box-shadow: none;
+	backdrop-filter: none;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] #google-st-options > .drawer-toggle {
+	padding: 0px 4px 10px 0px;
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] #google-st-preview .editable-slider-notification {
+	position: inherit;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] .topRightInset {
+	top: 90px;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] #google-st-preview .bg_list {
+	width: auto;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] #google-messages-container .flexFlowColumn {
+	max-width: 99.5%;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] #sheld {
+	border-radius: 15px;
+	height: 100%;
+	top: unset;
+	max-height: unset;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] #chat {
+	max-height: unset;
+}
+
+body[data-guinevere-theme="google-messages-legacy"] #completion_prompt_manager_popup {
+	max-width: 50%;
+}
+
+@media screen and (max-width: 1000px) {
+	body[data-guinevere-theme="google-messages-legacy"] .mes {
+		top: 60px;
+	}
+	body[data-guinevere-theme="google-messages-legacy"] .topRightInset {
+		top: 15vh;
+	}
+}
